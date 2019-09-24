@@ -9,83 +9,91 @@
 import UIKit
 import Firebase
 
-class ChatViewController: UIViewController {
+class ChatViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate {
     
-    // Declare instance variables here
-
+    let messageCellIdentifier = "customMessageCell"
+    let messageCellNibName = "MessageCell"
     
-    // We've pre-linked the IBOutlets
     @IBOutlet var heightConstraint: NSLayoutConstraint!
     @IBOutlet var sendButton: UIButton!
     @IBOutlet var messageTextfield: UITextField!
     @IBOutlet var messageTableView: UITableView!
     
-    
+    var heightConstraintDefaultValue = CGFloat()
+    let keyboardHeight: CGFloat = 333
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         self.navigationItem.setHidesBackButton(true, animated: false)
+        heightConstraintDefaultValue = heightConstraint.constant
         
-        //TODO: Set yourself as the delegate and datasource here:
+        messageTableView.delegate = self
+        messageTableView.dataSource = self
         
+        messageTextfield.delegate = self
         
-        
-        //TODO: Set yourself as the delegate of the text field here:
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(tableViewTapped))
+        messageTableView.addGestureRecognizer(tapGesture)
 
-        
-        
-        //TODO: Set the tapGesture here:
-        
-        
-
-        //TODO: Register your MessageCell.xib file here:
-
-        
+        messageTableView.register(UINib(nibName: messageCellNibName, bundle: nil), forCellReuseIdentifier: messageCellIdentifier)
+                
+        self.configureTableView()
     }
 
     ///////////////////////////////////////////
     
     //MARK: - TableView DataSource Methods
+    let messages = ["First Message", "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur? Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur?", "Third Message", "Fourth Message"]
     
     
-    
-    //TODO: Declare cellForRowAtIndexPath here:
-    
-    
-    
-    //TODO: Declare numberOfRowsInSection here:
-    
-    
-    
-    //TODO: Declare tableViewTapped here:
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
+        let cell = tableView.dequeueReusableCell(withIdentifier: messageCellIdentifier, for: indexPath) as! CustomMessageCell
+        
+        cell.messageBody.text = messages[indexPath.row]
+        
+        return cell
+    }
     
     
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return messages.count
+    }
     
-    //TODO: Declare configureTableView here:
+    @objc func tableViewTapped() {
+        messageTextfield.endEditing(true)
+    }
     
+    func configureTableView() {
+        messageTableView.rowHeight = UITableView.automaticDimension
+        messageTableView.estimatedRowHeight = 100
+    }
     
     
     ///////////////////////////////////////////
     
     //MARK:- TextField Delegate Methods
     
-    
+    func textFieldDidBeginEditing(_ textField: UITextField) {
+        UIView.animate(withDuration: 0.2) {
+            // TODO: ajeitar altura
+            self.heightConstraint.constant = self.keyboardHeight
+            self.view.layoutIfNeeded()
+        }
+    }
 
-    
-    //TODO: Declare textFieldDidBeginEditing here:
-    
-    
-    
-    
-    //TODO: Declare textFieldDidEndEditing here:
-    
-
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        UIView.animate(withDuration: 0.2) {
+            self.heightConstraint.constant = self.heightConstraintDefaultValue
+            self.view.layoutIfNeeded()
+        }
+    }
     
     ///////////////////////////////////////////
     
     
-    //MARK: - Send & Recieve from Firebase
+    //MARK: - Send & Receive from Firebase
     
     
     

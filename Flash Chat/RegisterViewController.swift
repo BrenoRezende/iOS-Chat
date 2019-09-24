@@ -48,7 +48,6 @@ class RegisterViewController: UIViewController {
                     self.goToChatScreen()
                 }
                 
-                
             }
         }
     }

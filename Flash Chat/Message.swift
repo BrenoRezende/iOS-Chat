@@ -6,10 +6,14 @@
 //  Created by Breno Rezende on 10/09/19.
 //  Copyright © 2019 brezende. All rights reserved.
 
-class Message {
+struct Message {
     
-    //TODO: Messages need a messageBody and a sender variable
+    let sender: String
+    let body: String
     
-    
+    init(sender: String, body: String) {
+        self.sender = sender
+        self.body = body
+    }
     
 }
