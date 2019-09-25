@@ -20,7 +20,7 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     @IBOutlet var messageTableView: UITableView!
     
     var heightConstraintDefaultValue = CGFloat()
-    let keyboardHeight: CGFloat = 333
+    let keyboardHeight: CGFloat = 308
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -76,15 +76,14 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     //MARK:- TextField Delegate Methods
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        UIView.animate(withDuration: 0.2) {
-            // TODO: ajeitar altura
+        UIView.animate(withDuration: 0.3) {
             self.heightConstraint.constant = self.keyboardHeight
             self.view.layoutIfNeeded()
         }
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
-        UIView.animate(withDuration: 0.2) {
+        UIView.animate(withDuration: 0.3) {
             self.heightConstraint.constant = self.heightConstraintDefaultValue
             self.view.layoutIfNeeded()
         }
@@ -111,9 +110,6 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     
 
-    
-    
-    
     @IBAction func logOutPressed(_ sender: AnyObject) {
         
         do {

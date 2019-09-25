@@ -12,7 +12,7 @@ import UIKit
 import Firebase
 import SVProgressHUD
 
-class RegisterViewController: UIViewController {
+class RegisterViewController: UIViewController, UITextFieldDelegate {
 
     //Pre-linked IBOutlets
 
@@ -21,15 +21,17 @@ class RegisterViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        emailTextfield.delegate = self
+        passwordTextfield.delegate = self
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
     }
   
-    @IBAction func registerPressed(_ sender: AnyObject) {
-        
-        if let email = emailTextfield.text, let password = passwordTextfield.text {
+    fileprivate func register() {
+        if let email = emailTextfield.text, let password = passwordTextfield.text, email.count > 0, password.count > 0 {
             let firebaseAuth = Auth.auth()
             
             SVProgressHUD.show()
@@ -49,11 +51,28 @@ class RegisterViewController: UIViewController {
                 }
                 
             }
+        } else {
+            SVProgressHUD.showError(withStatus: "Please enter a correct email and password")
         }
+    }
+    
+    @IBAction func registerPressed(_ sender: AnyObject) {
+        register()
     }
     
     fileprivate func goToChatScreen() {
         self.performSegue(withIdentifier: "goToChat", sender: self)
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        if textField == emailTextfield {
+            passwordTextfield.becomeFirstResponder()
+        } else {
+            passwordTextfield.resignFirstResponder()
+            register()
+        }
+        
+        return true
     }
     
 }
