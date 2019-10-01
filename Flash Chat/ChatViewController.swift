@@ -9,6 +9,7 @@
 import UIKit
 import Firebase
 import SVProgressHUD
+import ChameleonFramework
 
 class ChatViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UITextFieldDelegate {
     
@@ -24,13 +25,16 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     @IBOutlet var messageTableView: UITableView!
     
     var heightConstraintDefaultValue = CGFloat()
-    let keyboardHeight: CGFloat = 308
+    var keyboardHeight = CGFloat()
+    var keyboardAnimationDuration: Double = 0.24
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         self.navigationItem.setHidesBackButton(true, animated: false)
+        
         heightConstraintDefaultValue = heightConstraint.constant
+        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
                 
         messageTableView.delegate = self
         messageTableView.dataSource = self
@@ -46,6 +50,13 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         self.retrieveMessages()
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        self.messageTextfield.becomeFirstResponder()
+        self.messageTextfield.resignFirstResponder()
+    }
+    
     ///////////////////////////////////////////
     
     //MARK: - TableView DataSource Methods
@@ -58,9 +69,13 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         cell.messageBody.text = messages[indexPath.row].body
         cell.avatarImageView.image = #imageLiteral(resourceName: "egg")
         
+        if cell.senderUsername.text == Auth.auth().currentUser?.email {
+            cell.messageBackground.backgroundColor = UIColor.flatNavyBlue()
+            cell.avatarImageView.backgroundColor = UIColor.flatSand()
+        }
+        
         return cell
     }
-    
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return messages.count
@@ -81,17 +96,25 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     //MARK:- TextField Delegate Methods
     
     func textFieldDidBeginEditing(_ textField: UITextField) {
-        UIView.animate(withDuration: 0.3) {
-            self.heightConstraint.constant = self.keyboardHeight
+        UIView.animate(withDuration: self.keyboardAnimationDuration) {
+            self.heightConstraint.constant = self.keyboardHeight + self.heightConstraintDefaultValue
             self.view.layoutIfNeeded()
         }
     }
 
     func textFieldDidEndEditing(_ textField: UITextField) {
-        UIView.animate(withDuration: 0.3) {
+        UIView.animate(withDuration: self.keyboardAnimationDuration) {
             self.heightConstraint.constant = self.heightConstraintDefaultValue
             self.view.layoutIfNeeded()
         }
+    }
+    
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        if textField == messageTextfield {
+            self.sendMessage()
+        }
+        
+        return true
     }
     
     ///////////////////////////////////////////
@@ -100,33 +123,43 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
     //MARK: - Send & Receive from Firebase
     
     @IBAction func sendPressed(_ sender: AnyObject) {
+        self.sendMessage()
+    }
+    
+    func sendMessage() {
         
-        messageTextfield.endEditing(true)
-        
-        messageTextfield.isEnabled = false
-        sendButton.isEnabled = false
+        if let message = messageTextfield.text, !message.isEmpty {
+            
+            messageTextfield.endEditing(true)
+            
+            messageTextfield.isEnabled = false
+            sendButton.isEnabled = false
+                    
+            let newMessage = ["Sender" : Auth.auth().currentUser?.email, "MessageBody" : messageTextfield.text]
                 
-        let newMessage = ["Sender" : Auth.auth().currentUser?.email, "MessageBody" : messageTextfield.text]
-            
-        self.messagesDB.childByAutoId().setValue(newMessage) {
-            (error, reference) in
-            
-            if error != nil {
-                SVProgressHUD.showError(withStatus: error?.localizedDescription)
-            } else {
-                self.messageTextfield.text = ""
+            self.messagesDB.childByAutoId().setValue(newMessage) {
+                (error, reference) in
+                
+                if error != nil {
+                    SVProgressHUD.showError(withStatus: error?.localizedDescription)
+                } else {
+                    self.messageTextfield.text = ""
+                }
+                
+                self.messageTextfield.isEnabled = true
+                self.sendButton.isEnabled = true
             }
-            
-            self.messageTextfield.isEnabled = true
-            self.sendButton.isEnabled = true
         }
-        
     }
     
     func retrieveMessages() {
         
+        SVProgressHUD.show()
+        
         self.messagesDB.observe(.childAdded) {
             (snapshot) in
+            
+            SVProgressHUD.dismiss()
             
             let snapshotValue = snapshot.value as? Dictionary<String, String>
             
@@ -141,7 +174,8 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         }
     }
     
-
+    // MARK: - Logout from Firebase
+    
     @IBAction func logOutPressed(_ sender: AnyObject) {
         
         do {
@@ -154,6 +188,17 @@ class ChatViewController: UIViewController, UITableViewDelegate, UITableViewData
         
     }
     
+    // MARK: - System Methods
+    
+    @objc func keyboardWillShow(_ notification: NSNotification) {
+        if let keyboardRect = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue {
+            self.keyboardHeight = keyboardRect.height
+        }
+        
+        if let duration = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue) as? Double {
+            self.keyboardAnimationDuration = duration
+        }
+    }
 
 
 }
